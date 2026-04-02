@@ -23,18 +23,7 @@ export const scan = async (req, res) => {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Check if a completed record already exists for today
-  const completedRecord = await AttendanceRecord.findOne({
-    employee: employeeId,
-    date: today,
-    status: 'completed'
-  });
-
-  if (completedRecord) {
-    return res.status(400).json({ message: 'You have already completed your attendance for today.' });
-  }
-
-  // Check if there is an active (check-in) record for today
+  // Find any currently active (open) session for today
   const activeRecord = await AttendanceRecord.findOne({
     employee: employeeId,
     date: today,
