@@ -31,6 +31,7 @@ const EmployeeDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('scan');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,16 +58,37 @@ const EmployeeDashboard = () => {
   const handleMonthFilter = (e) => { e.preventDefault(); fetchAttendance(); };
   const handleLogout = async () => { await logout(); navigate('/login'); };
 
+  const switchTab = (id) => {
+    setActiveTab(id);
+    setSidebarOpen(false);
+  };
+
   const completedRecords = records.filter(r => r.status === 'completed');
   const totalHours = completedRecords.reduce((sum, r) => sum + (r.totalHours || 0), 0);
   const totalSalary = completedRecords.reduce((sum, r) => sum + (r.dailySalary || 0), 0);
+  const currentNavLabel = NAV.find(n => n.id === activeTab)?.label || '';
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-30
+        w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+      `}>
         {/* Logo */}
-        <div className="p-5 border-b border-gray-200">
+        <div className="p-5 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,6 +100,12 @@ const EmployeeDashboard = () => {
               <p className="text-xs text-gray-500">Employee</p>
             </div>
           </div>
+          {/* Close button (mobile only) */}
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-gray-600 p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Nav */}
@@ -85,7 +113,7 @@ const EmployeeDashboard = () => {
           {NAV.map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => switchTab(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
                 activeTab === item.id
                   ? 'bg-green-50 text-green-700'
@@ -118,82 +146,108 @@ const EmployeeDashboard = () => {
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* Scan QR */}
-          {activeTab === 'scan' && (
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Scan QR Code</h2>
-              <div className="flex justify-center">
+        {/* Mobile top bar */}
+        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-gray-900 text-sm">{currentNavLabel}</span>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 md:p-8">
+
+            {/* Scan QR */}
+            {activeTab === 'scan' && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-6 hidden md:block">Scan QR Code</h2>
                 <QRScanner />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Attendance */}
-          {activeTab === 'attendance' && (
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">My Attendance</h2>
-              <p className="text-gray-500 text-sm mb-6">View your attendance history and earnings</p>
+            {/* Attendance */}
+            {activeTab === 'attendance' && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-1 hidden md:block">My Attendance</h2>
+                <p className="text-gray-500 text-sm mb-4 hidden md:block">View your attendance history and earnings</p>
 
-              <form onSubmit={handleMonthFilter} className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm">
-                <div className="flex items-end gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Filter by Month</label>
-                    <input
-                      type="month"
-                      value={monthFilter}
-                      onChange={e => setMonthFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+                <form onSubmit={handleMonthFilter} className="bg-white rounded-xl border border-gray-200 p-4 mb-4 shadow-sm">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Filter by Month</label>
+                      <input
+                        type="month"
+                        value={monthFilter}
+                        onChange={e => setMonthFilter(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="submit" className="flex-1 sm:flex-none px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                        Apply
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setMonthFilter(''); setTimeout(fetchAttendance, 50); }}
+                        className="flex-1 sm:flex-none px-5 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   </div>
-                  <button type="submit" className="px-5 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
-                    Apply
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMonthFilter(''); setTimeout(fetchAttendance, 50); }}
-                    className="px-5 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Clear
-                  </button>
-                </div>
-              </form>
+                </form>
 
-              {records.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Days</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{completedRecords.length}</p>
+                {records.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm text-center">
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Days</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">{completedRecords.length}</p>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm text-center">
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Hours</p>
+                      <p className="text-xl font-bold text-gray-900 mt-1">{totalHours.toFixed(1)}h</p>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm text-center">
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Earned</p>
+                      <p className="text-xl font-bold text-green-600 mt-1">${totalSalary.toFixed(0)}</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Hours</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{totalHours.toFixed(2)}h</p>
-                  </div>
-                  <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Earnings</p>
-                    <p className="text-2xl font-bold text-green-600 mt-1">${totalSalary.toFixed(2)}</p>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>
-              )}
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
-                </div>
-              ) : (
-                <AttendanceTable records={records} isManager={false} />
-              )}
-            </div>
-          )}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">{error}</div>
+                )}
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <AttendanceTable records={records} isManager={false} />
+                  </div>
+                )}
+              </div>
+            )}
 
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

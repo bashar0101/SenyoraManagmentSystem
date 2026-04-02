@@ -224,11 +224,27 @@ const ManagerDashboard = () => {
 
   const isDefaultManager = (u) => u.email === DEFAULT_MANAGER_EMAIL;
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const switchTab = (id) => { setActiveTab(id); setSidebarOpen(false); };
+  const currentNavLabel = NAV.find(n => n.id === activeTab)?.label || '';
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-        <div className="p-5 border-b border-gray-200">
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-30
+        w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+      `}>
+        <div className="p-5 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,13 +256,18 @@ const ManagerDashboard = () => {
               <p className="text-xs text-gray-500">Manager</p>
             </div>
           </div>
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-gray-600 p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => switchTab(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
                 activeTab === item.id
                   ? 'bg-blue-50 text-blue-700'
@@ -276,9 +297,29 @@ const ManagerDashboard = () => {
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Mobile top bar */}
+        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+          <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <span className="font-semibold text-gray-900 text-sm">{currentNavLabel}</span>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <main className="flex-1 overflow-y-auto">
+        <div className="p-4 md:p-8">
 
           {/* QR Display */}
           {activeTab === 'qr' && (
@@ -328,7 +369,9 @@ const ManagerDashboard = () => {
               {attendanceLoading ? (
                 <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>
               ) : (
-                <AttendanceTable records={records} isManager={true} />
+                <div className="overflow-x-auto">
+                  <AttendanceTable records={records} isManager={true} />
+                </div>
               )}
             </div>
           )}
@@ -522,6 +565,7 @@ const ManagerDashboard = () => {
 
         </div>
       </main>
+      </div>
 
       {/* Edit Modal */}
       {editUser && (
