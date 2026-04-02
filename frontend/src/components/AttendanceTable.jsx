@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 const formatTime = (dateStr) => {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -9,11 +11,11 @@ const formatCurrency = (amount) => {
 };
 
 const StatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const styles = {
     active: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
     completed: 'bg-green-100 text-green-800 border border-green-200'
   };
-
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
       {status === 'active' ? (
@@ -21,18 +23,20 @@ const StatusBadge = ({ status }) => {
       ) : (
         <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
       )}
-      {status}
+      {status === 'active' ? t('attendance.statusActive') : t('attendance.statusCompleted')}
     </span>
   );
 };
 
 const AttendanceTable = ({ records = [], isManager = false }) => {
+  const { t } = useTranslation();
+
   if (!records.length) {
     return (
       <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
         <div className="text-4xl mb-3">📋</div>
-        <p className="text-gray-500 font-medium">No attendance records found</p>
-        <p className="text-gray-400 text-sm mt-1">Records will appear here once employees check in</p>
+        <p className="text-gray-500 font-medium">{t('attendance.noRecords')}</p>
+        <p className="text-gray-400 text-sm mt-1">{t('attendance.noRecordsHint')}</p>
       </div>
     );
   }
@@ -42,15 +46,15 @@ const AttendanceTable = ({ records = [], isManager = false }) => {
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.date')}</th>
             {isManager && (
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Employee</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.employee')}</th>
             )}
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Start Time</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">End Time</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Daily Salary</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.startTime')}</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.endTime')}</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.totalHours')}</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.dailySalary')}</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('attendance.status')}</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
@@ -60,7 +64,7 @@ const AttendanceTable = ({ records = [], isManager = false }) => {
               {isManager && (
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{record.employee?.name || '—'}</p>
+                    <p className="text-sm font-medium text-gray-900">{record.employee?.name} {record.employee?.lastName || ''}</p>
                     <p className="text-xs text-gray-500">{record.employee?.email || ''}</p>
                   </div>
                 </td>
@@ -83,7 +87,7 @@ const AttendanceTable = ({ records = [], isManager = false }) => {
           <tfoot className="bg-gray-50 border-t-2 border-gray-200">
             <tr>
               <td colSpan={isManager ? 4 : 3} className="px-4 py-3 text-sm font-semibold text-gray-700">
-                Totals ({records.length} records)
+                {t('attendance.totals')} ({records.length} {t('attendance.records')})
               </td>
               <td className="px-4 py-3 text-sm font-bold text-gray-900">
                 {records.reduce((sum, r) => sum + (r.totalHours || 0), 0).toFixed(2)}h
