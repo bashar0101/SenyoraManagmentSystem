@@ -1,0 +1,29 @@
+services:
+
+  backend:
+    build: ./backend
+    container_name: senyora-backend
+    restart: always
+    env_file: ./backend/.env
+    ports:
+      - "5000:5000"
+    networks:
+      - senyora-net
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: senyora-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - senyora-net
+
+networks:
+  senyora-net:
+    driver: bridge
